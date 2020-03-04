@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="celan">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="res/css/uikit.min.css" />
+    <script src="res/js/uikit.min.js"></script>
+    <script src="res/js/uikit-icons.min.js"></script>
+    <title>{{.HostName}}</title>
+    <script>
+        window.onload = function () {
+            update();
+        }
+
+        function update() {
+            // https://ja.javascript.info/xmlhttprequest
+
+            // 1. new XMLHttpRequest オブジェクト作成
+            let xhr = new XMLHttpRequest();
+
+            // 2. 設定: URL .../api に対する GET-リクエスト
+            xhr.open('GET', '/api');
+
+            // 3. ネットワーク経由でリクエスト送信
+            xhr.responseType = 'json';
+            xhr.send();
+
+            // 4. レスポンスを受け取った後のコールバック
+            xhr.onload = function () {
+
+                try {
+
+                    if (xhr.status != 200) {
+
+                        // エラーの場合
+                        alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+
+                    } else {
+                        // 成功
+
+                        var data = xhr.response;
+                        document.getElementById('usage-all').innerHTML = data.All;
+
+                        document.getElementById('time').innerHTML = getDateString(new Date());
+
+                        // リストをクリア
+                        var list = document.getElementsByName('UsageList')[0];
+
+                        while (list != null && list.firstChild) {
+                            list.removeChild(list.firstChild);
+                        }
+
+                        // li 要素の作成
+                        data.Usage.forEach((value) => {
+                            var newTxt = document.createTextNode(value.Name + " : " + value.Using);
+                            var newLi = document.createElement("li");
+                            newLi.appendChild(newTxt);
+
+                            // リストに追加
+                            list.appendChild(newLi);
+                        });
+                    }
+                } catch (error) {
+
+                }
+
+                // 1sec後に再度取得
+                window.setTimeout(update, 1000);
+            };
+        }
+
+        // https://tagamidaiki.com/javascript-0-chink/
+        function getDateString(date) {
+
+            var yyyy = date.getFullYear();
+            var mm = toDoubleDigits(date.getMonth() + 1);
+            var dd = toDoubleDigits(date.getDate());
+            var hh = toDoubleDigits(date.getHours());
+            var mi = toDoubleDigits(date.getMinutes());
+            var sq = toDoubleDigits(date.getSeconds());
+            return hh + ':' + mi + ':' + sq;
+        };
+
+        function toDoubleDigits(num) {
+            num += "";
+            if (num.length === 1) {
+                num = "0" + num;
+            }
+            return num;
+        }
+    </script>
+</head>
+
+<body>
+    <h1 class="uk-heading-bullet"><span id="time">xxx:xxx:xxx</span> 時点での {{.HostName}} のプロセス</h1>
+    <div id="usage-all"></div>
+    <div class="uk-margin uk-card uk-card-default uk-card-body">
+        <ul name="UsageList" class="uk-list uk-list-divider"></ul>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+</body>
+
+</html>
