@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="celan">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="res/css/uikit.min.css" />
+    <script src="res/js/uikit.min.js"></script>
+    <script src="res/js/uikit-icons.min.js"></script>
+    <title>{{.HostName}}</title>
+    <script>
+        window.onload = function () {
+            update();
+            eventHandle();
+
+            document.getElementById('post_button').onclick = function () {
+                post();
+            };
+        }
+
+        function eventHandle() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", "/events?timeout=60&category=update");
+            xhr.responseType = 'json';
+            xhr.send();
+
+            xhr.onload = function () {
+                if (!xhr.response.timeout) {
+                    update();
+                }
+                setTimeout(eventHandle, 10);
+            }
+        }
+
+        function update() {
+            // https://ja.javascript.info/xmlhttprequest
+
+            // 1. new XMLHttpRequest オブジェクト作成
+            let xhr = new XMLHttpRequest();
+
+            // 2. 設定: URL .../get に対する GET-リクエスト
+            xhr.open('GET', '/get');
+
+            // 3. ネットワーク経由でリクエスト送信
+            xhr.responseType = 'json';
+            xhr.send();
+
+            // 4. レスポンスを受け取った後のコールバック
+            xhr.onload = function () {
+
+                try {
+
+                    if (xhr.status != 200) {
+
+                        // エラーの場合
+                        alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+
+                    } else {
+                        // 成功
+
+                        var data = xhr.response;
+                        // document.getElementById('usage-all').innerHTML = data.All;
+
+                        document.getElementById('time').innerHTML = getDateString(new Date());
+
+                        // リストをクリア
+                        var list = document.getElementsByName('MessageList')[0];
+
+                        while (list != null && list.firstChild) {
+                            list.removeChild(list.firstChild);
+                        }
+
+                        // li 要素の作成
+                        data.Message.reverse().forEach((value) => {
+                            var newTxt = document.createTextNode(value.Body + " [" + value.Time + "]");
+                            var newLi = document.createElement("li");
+                            newLi.appendChild(newTxt);
+
+                            // リストに追加
+                            list.appendChild(newLi);
+                        });
+                    }
+                } catch (error) {
+
+                }
+            };
+        }
+        // https://tagamidaiki.com/javascript-0-chink/
+        function getDateString(date) {
+
+            var yyyy = date.getFullYear();
+            var mm = toDoubleDigits(date.getMonth() + 1);
+            var dd = toDoubleDigits(date.getDate());
+            var hh = toDoubleDigits(date.getHours());
+            var mi = toDoubleDigits(date.getMinutes());
+            var sq = toDoubleDigits(date.getSeconds());
+            return hh + ':' + mi + ':' + sq;
+        };
+
+        function toDoubleDigits(num) {
+            num += "";
+            if (num.length === 1) {
+                num = "0" + num;
+            }
+            return num;
+        }
+
+        function post() {
+            xhr = new XMLHttpRequest();
+            xhr.open('POST', '/postMessage', true);
+            xhr.setRequestHeader('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+            var request = messageinput.value;
+            xhr.send(request);
+
+            messageinput.value = "";
+        }
+
+    </script>
+</head>
+
+<body>
+    <h1 class="uk-heading-bullet">{{.HostName}}</h1>
+    <div class="uk-margin-medium-left">
+        <input class="uk-input" placeholder="メッセージ" id="messageinput" type="text" maxlength="100">
+        <button id="post_button" class="uk-button uk-button-primary uk-button-small">送信</button>
+
+        <div class="uk-text-small">最終更新：<span id="time">xxx:xxx:xxx</span></div>
+        <div class="uk-margin uk-card uk-card-default uk-card-body">
+            <ul name="MessageList" class="uk-list uk-list-divider"></ul>
+        </div>
+    </div>
+</body>
+
+</html>
