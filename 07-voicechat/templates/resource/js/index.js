@@ -21,7 +21,7 @@
   var connections = {}; // key: channel, value: connection
 
   // initialize websocket
-  var url = "ws://" + location.host + "/ws";
+  var url = "wss://" + location.host + "/ws";
   var ws = new Socket(url, function (type, msg) {
 
     console.log('received type:' + type)

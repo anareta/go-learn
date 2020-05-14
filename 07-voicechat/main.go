@@ -41,8 +41,12 @@ func main() {
 
 	// サーバーを起動
 	// http://localhost:8989
-	fmt.Println("The Server runs with http://localhost:8989")
-	http.ListenAndServe(":8989", nil)
+
+	//fmt.Println("The Server runs with https://localhost:8989")
+	// http.ListenAndServe(":8989", nil)
+
+	fmt.Println("The Server runs with https://localhost:8989")
+	http.ListenAndServeTLS(":8989", "oreore.crt", "oreore.key", nil)
 }
 
 func htmlHandler(w http.ResponseWriter, r *http.Request) {
