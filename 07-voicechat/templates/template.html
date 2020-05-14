@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="celan">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="res/css/uikit.min.css" />
+    <script src="res/js/uikit.min.js"></script>
+    <script src="res/js/uikit-icons.min.js"></script>
+    <title>{{.HostName}}</title>
+    <script>
+        window.onload = function () {
+            update();
+            eventHandle();
+
+            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || window.navigator.mozGetUserMedia;
+            window.URL = window.URL || window.webkitURL;
+
+            var video = document.getElementById('myVideo');
+            var localStream = null;
+            navigator.getUserMedia({ video: true, audio: false },
+                function (stream) { // for success case
+                    console.log(stream);
+                    video.src = window.URL.createObjectURL(stream);
+                },
+                function (err) { // for error case
+                    console.log(err);
+                    document.getElementById('error-message').innerHTML = "[エラー！]" + err.message;
+                }
+            );
+        }
+
+        function eventHandle() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", "/events?timeout=60&category=update");
+            xhr.responseType = 'json';
+            xhr.send();
+
+            xhr.onload = function () {
+                if (!xhr.response.timeout) {
+                    update();
+                }
+                setTimeout(eventHandle, 10);
+            }
+        }
+
+        function update() {
+
+        }
+
+        function toDoubleDigits(num) {
+            num += "";
+            if (num.length === 1) {
+                num = "0" + num;
+            }
+            return num;
+        }
+
+        function post() {
+            xhr = new XMLHttpRequest();
+            xhr.open('POST', '/postMessage', true);
+            xhr.setRequestHeader('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+            var request = messageinput.value;
+            xhr.send(request);
+
+            messageinput.value = "";
+        }
+
+    </script>
+</head>
+
+<body>
+    <h1 class="uk-heading-bullet">{{.HostName}}</h1>
+    <div class="uk-margin-medium-left">
+        <div class="uk-text-small uk-text-danger uk-text-large"><span id="error-message"></span></div>
+
+        <video id="myVideo" width="400" height="300" autoplay="1"></video>
+    </div>
+</body>
+
+</html>
