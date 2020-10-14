@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="celan">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="res/css/uikit.min.css" />
+    <script src="res/js/uikit.min.js"></script>
+    <script src="res/js/uikit-icons.min.js"></script>
+    <title>{{.HostName}}</title>
+    <script>
+        window.onload = function ()
+        {
+            update();
+            eventHandle();
+
+            document.getElementById('post_button').onclick = function () {
+                post();
+            };
+        }
+
+        function update()
+        {
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', '/getAll');
+            xhr.responseType = 'json';
+            xhr.send();
+            xhr.onload = function ()
+            {
+                try
+                {
+                    if (xhr.status != 200)
+                    {
+                        // エラーの場合
+                        alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+                        return;
+                    }
+
+                    var data = xhr.response;
+                    document.getElementById('time').innerHTML = getDateString(new Date());
+
+                    // Listにメッセージを登録
+                    var list = document.getElementsByName('MessageList')[0];
+                    data.Message.reverse().forEach((value) => {
+                        var newTxt = document.createTextNode("[" + value.username + "]" + value.message);
+                        var newLi = document.createElement("li");
+                        newLi.appendChild(newTxt);
+
+                        var timeText = document.createTextNode(" [" + value.time + "]");
+                        var timeElement = document.createElement("span");
+                        timeElement.style.fontSize = "small";
+                        timeElement.style.color = "gray";
+                        timeElement.appendChild(timeText);
+                        newLi.appendChild(timeElement);
+
+                        // リストに追加
+                        list.appendChild(newLi);
+                    });
+
+                    document.getElementById('time').innerHTML = getDateString(new Date());
+                } catch (error) {
+
+                }
+            };
+        }
+
+        function eventHandle()
+        {
+            this.ws = new WebSocket('ws://' + window.location.host + '/ws');
+            this.ws.addEventListener('message', function(e) {
+                console.log("got message");
+                console.log(event.data);
+
+                var value = JSON.parse(e.data);
+
+                // Listにメッセージを登録
+                var list = document.getElementsByName('MessageList')[0];
+
+                var newTxt = document.createTextNode("[" + value.username + "]" + value.message);
+                var newLi = document.createElement("li");
+                newLi.appendChild(newTxt);
+
+                var timeText = document.createTextNode(" [" + value.time + "]");
+                var timeElement = document.createElement("span");
+                timeElement.style.fontSize = "small";
+                timeElement.style.color = "gray";
+                timeElement.appendChild(timeText);
+                newLi.appendChild(timeElement);
+
+                // リストに追加
+                list.prepend(newLi);
+
+                document.getElementById('time').innerHTML = getDateString(new Date());
+            });
+        }
+
+        function post()
+        {
+            if (!messageinput.value)
+            {
+                // メッセージが空なら何もしない
+                return;
+            }
+
+            this.ws.send(
+                    JSON.stringify({
+                            username: usernameinput.value,
+                            message: messageinput.value,
+                            time: getDateString(new Date()),
+                        }
+                    ));
+
+            // 入力欄をクリア
+            messageinput.value = "";
+        }
+
+        function getDateString(date)
+        {
+            var yyyy = date.getFullYear();
+            var mm = toDoubleDigits(date.getMonth() + 1);
+            var dd = toDoubleDigits(date.getDate());
+            var hh = toDoubleDigits(date.getHours());
+            var mi = toDoubleDigits(date.getMinutes());
+            var sq = toDoubleDigits(date.getSeconds());
+            return hh + ':' + mi + ':' + sq;
+        }
+
+        function toDoubleDigits(num)
+        {
+            num += "";
+            if (num.length === 1) {
+                num = "0" + num;
+            }
+            return num;
+        }
+
+    </script>
+</head>
+
+<body>
+    <h1 class="uk-heading-bullet">{{.HostName}}</h1>
+    <div class="uk-margin-medium-left">
+        <input class="uk-input" placeholder="名前" id="usernameinput" type="text" maxlength="20">
+        <input class="uk-input" placeholder="メッセージ" id="messageinput" type="text" maxlength="100">
+        <button id="post_button" class="uk-button uk-button-primary uk-button-small">送信</button>
+
+        <div class="uk-text-small">最終更新：<span id="time">xxx:xxx:xxx</span></div>
+        <div class="uk-margin uk-card uk-card-default uk-card-body">
+            <ul name="MessageList" class="uk-list uk-list-divider"></ul>
+        </div>
+    </div>
+</body>
+
+</html>
